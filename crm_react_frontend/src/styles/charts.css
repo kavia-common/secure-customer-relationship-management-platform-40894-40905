@@ -1,0 +1,28 @@
+.donut {
+  --size: 160px;
+  --thickness: 12px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background:
+    radial-gradient(farthest-side, white 67%, transparent 68% 100%),
+    conic-gradient(var(--color-primary) var(--value, 0), #F3F4F6 0);
+  position: relative;
+}
+
+.donut .center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.sparkline {
+  --h: 40px;
+  height: var(--h);
+  background:
+    linear-gradient(to top, rgba(146,64,14,0.15), rgba(146,64,14,0.15)) 0 0/var(--p, 0%) 100% no-repeat,
+    linear-gradient(to top, rgba(107,114,128,0.15), rgba(107,114,128,0.15)) 0 0/100% 100% no-repeat;
+  border-radius: var(--radius-sm);
+}
