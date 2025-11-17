@@ -24,24 +24,39 @@ function matchPath(pattern, path) {
   return { params };
 }
 
+function parseHash() {
+  const h = window.location.hash || "#/";
+  const raw = h.startsWith("#") ? h.slice(1) : h;
+  const [pathnameOnly, qs = ""] = raw.split("?");
+  const query = {};
+  if (qs) {
+    const usp = new URLSearchParams(qs);
+    for (const [k, v] of usp.entries()) {
+      query[k] = v;
+    }
+  }
+  const path = pathnameOnly || "/";
+  return { path, query, full: raw };
+}
+
 /**
  * PUBLIC_INTERFACE
  * HashRouter component renders the first matching route for location.hash.
  * Routes: [{ path: '/customers', component: Customers }, ...]
  */
 export function HashRouter({ routes, notFound: NotFound }) {
-  const current = useHashPath();
+  const { path, query } = useHashLocation();
   const routeMatch = useMemo(() => {
     for (const route of routes) {
-      const m = matchPath(route.path, current);
+      const m = matchPath(route.path, path);
       if (m) return { component: route.component, params: m.params, path: route.path };
     }
     return null;
-  }, [routes, current]);
+  }, [routes, path]);
 
   if (routeMatch) {
     const Cmp = routeMatch.component;
-    return <Cmp params={routeMatch.params} path={routeMatch.path} />;
+    return <Cmp params={routeMatch.params} path={routeMatch.path} query={query} />;
   }
   return NotFound ? <NotFound /> : null;
 }
@@ -73,19 +88,15 @@ export function navigate(to) {
   }
 }
 
-/* Hook: get current hash path without '#' */
-function useHashPath() {
-  const getPath = () => {
-    const h = window.location.hash || "#/";
-    const raw = h.startsWith("#") ? h.slice(1) : h;
-    return raw || "/";
-  };
-  const [path, setPath] = useState(getPath());
+/* Hook: get current hash path/query without '#' */
+function useHashLocation() {
+  const getLoc = () => parseHash();
+  const [loc, setLoc] = useState(getLoc());
 
   useEffect(() => {
-    const onChange = () => setPath(getPath());
+    const onChange = () => setLoc(getLoc());
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
-  return path;
+  return loc;
 }

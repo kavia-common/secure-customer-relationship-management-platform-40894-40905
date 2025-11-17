@@ -5,7 +5,8 @@ import { useApp } from "../state/AppContext";
 function getHashPath() {
   const h = window.location.hash || "#/";
   const raw = h.startsWith("#") ? h.slice(1) : h;
-  return raw || "/";
+  const [pathnameOnly] = raw.split("?");
+  return pathnameOnly || "/";
 }
 
 function isActivePath(current, href) {

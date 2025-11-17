@@ -66,17 +66,55 @@ function safeJoin(base, path) {
   return `${base}${path}`;
 }
 
+function toQueryString(params) {
+  if (!params) return "";
+  const entries = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== null && String(v) !== ""
+  );
+  const usp = new URLSearchParams();
+  for (const [k, v] of entries) {
+    usp.set(k, String(v));
+  }
+  const qs = usp.toString();
+  return qs ? `?${qs}` : "";
+}
+
+function redirectIfUnauthorized(status) {
+  if (status === 401) {
+    try {
+      // Directly update hash to avoid circular import of navigate()
+      if (typeof window !== "undefined") {
+        window.location.hash = "#/login";
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
 /**
  * PUBLIC_INTERFACE
  * get - performs a GET with auth header and graceful failure fallback
+ * If params is provided, it will be appended as a query string.
  */
-export async function get(path) {
+export async function get(path, params = undefined) {
+  const url = safeJoin(API_BASE, path) + toQueryString(params);
   try {
-    const res = await fetch(safeJoin(API_BASE, path), {
+    const res = await fetch(url, {
       credentials: "include",
       headers: authHeaders(),
     });
-    if (!res.ok) throw new Error(`GET ${path} failed with ${res.status}`);
+    if (!res.ok) {
+      redirectIfUnauthorized(res.status);
+      let msg = `GET ${path} failed with ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j && j.detail) msg += `: ${JSON.stringify(j.detail)}`;
+      } catch {
+        // ignore parse
+      }
+      throw new Error(msg);
+    }
     return await res.json();
   } catch (e) {
     throw e;
@@ -88,13 +126,15 @@ export async function get(path) {
  * post - standard POST (no queue). For auth or non-idempotent calls where queueing isn't desired.
  */
 export async function post(path, body) {
-  const res = await fetch(safeJoin(API_BASE, path), {
+  const url = safeJoin(API_BASE, path);
+  const res = await fetch(url, {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: body ? JSON.stringify(body) : undefined,
     credentials: "include",
   });
   if (!res.ok) {
+    redirectIfUnauthorized(res.status);
     let msg = `POST ${path} failed ${res.status}`;
     try {
       const j = await res.json();
@@ -124,7 +164,10 @@ export async function mutate(method, path, body) {
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
     });
-    if (!res.ok) throw new Error(`${method} ${path} failed ${res.status}`);
+    if (!res.ok) {
+      redirectIfUnauthorized(res.status);
+      throw new Error(`${method} ${path} failed ${res.status}`);
+    }
     return await res.json().catch(() => ({}));
   } catch (e) {
     enqueue(payload);
