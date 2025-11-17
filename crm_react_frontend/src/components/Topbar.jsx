@@ -22,17 +22,34 @@ export default function Topbar() {
     }
   };
 
+  const collapsed = state.ui.sidebarCollapsed;
+  const isMobile = typeof window !== "undefined" ? window.innerWidth <= 1024 : false;
+
   return (
     <header className="topbar" role="banner">
       <div className="left">
-        <button className="btn ghost" aria-label="Toggle Sidebar" onClick={() => dispatch({ type: "SIDEBAR_TOGGLE" })}>☰</button>
+        <button
+          className="btn ghost"
+          aria-label="Toggle Sidebar"
+          aria-controls="primary-sidebar"
+          aria-expanded={isMobile ? !collapsed : !collapsed}
+          aria-pressed={!collapsed}
+          onClick={() => dispatch({ type: "SIDEBAR_TOGGLE" })}
+        >
+          ☰
+        </button>
         <div className="search" role="search">
           <span className="icon" aria-hidden="true">🔎</span>
-          <input className="input" placeholder="Search customers, requests…" aria-label="Search" onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              navigate("/customers");
-            }
-          }} />
+          <input
+            className="input"
+            placeholder="Search customers, requests…"
+            aria-label="Search"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                navigate("/customers");
+              }
+            }}
+          />
         </div>
       </div>
       <div className="right">

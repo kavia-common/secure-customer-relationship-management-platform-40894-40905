@@ -1,5 +1,5 @@
-import React from "react";
-import { AppProvider } from "./state/AppContext";
+import React, { useMemo } from "react";
+import { AppProvider, useApp } from "./state/AppContext";
 import { HashRouter } from "./router/HashRouter";
 import "./styles/theme.css";
 import "./styles/layout.css";
@@ -42,16 +42,44 @@ function App() {
     { path: "*", component: NotFound },
   ];
 
+  function AppShell() {
+    const { state, dispatch } = useApp();
+    const collapsed = state.ui.sidebarCollapsed;
+    const isMobile = typeof window !== "undefined" ? window.innerWidth <= 1024 : false;
+
+    const shellClass = useMemo(() => {
+      const classes = ["app-shell"];
+      if (collapsed) classes.push("sidebar-collapsed");
+      if (isMobile) classes.push("is-mobile");
+      if (isMobile && !collapsed) classes.push("sidebar-open");
+      return classes.join(" ");
+    }, [collapsed, isMobile]);
+
+    return (
+      <>
+        <a href="#main" className="visually-hidden">Skip to content</a>
+        <div className={shellClass}>
+          <Sidebar />
+          <Topbar />
+          <main id="main" className="main" role="main" aria-live="polite">
+            <HashRouter routes={routes} notFound={NotFound} />
+          </main>
+        </div>
+        {isMobile && !collapsed && (
+          <button
+            className="sidebar-backdrop"
+            aria-label="Close sidebar"
+            onClick={() => dispatch({ type: "SIDEBAR_SET", payload: true })}
+            tabIndex={-1}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <AppProvider>
-      <a href="#main" className="visually-hidden">Skip to content</a>
-      <div className="app-shell">
-        <Sidebar />
-        <Topbar />
-        <main id="main" className="main" role="main" aria-live="polite">
-          <HashRouter routes={routes} notFound={NotFound} />
-        </main>
-      </div>
+      <AppShell />
     </AppProvider>
   );
 }

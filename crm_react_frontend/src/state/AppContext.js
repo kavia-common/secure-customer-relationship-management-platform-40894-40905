@@ -22,6 +22,8 @@ function reducer(state, action) {
       return { ...state, ui: { ...state.ui, theme: action.payload } };
     case "SIDEBAR_TOGGLE":
       return { ...state, ui: { ...state.ui, sidebarCollapsed: !state.ui.sidebarCollapsed } };
+    case "SIDEBAR_SET":
+      return { ...state, ui: { ...state.ui, sidebarCollapsed: !!action.payload } };
     case "NOTIFY":
       return { ...state, ui: { ...state.ui, notifications: [...state.ui.notifications, action.payload] } };
     case "DISMISS_NOTIFY":
@@ -76,6 +78,41 @@ export function AppProvider({ children }) {
       })();
     }
   }, []);
+
+  // Sidebar persistence and responsiveness
+  useEffect(() => {
+    const key = "crm_sidebar_collapsed";
+    // Load saved preference or set based on initial viewport
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved !== null) {
+        dispatch({ type: "SIDEBAR_SET", payload: JSON.parse(saved) });
+      } else if (typeof window !== "undefined" && window.innerWidth <= 1024) {
+        dispatch({ type: "SIDEBAR_SET", payload: true }); // auto collapse on small screens
+      }
+    } catch {
+      // ignore storage errors
+    }
+
+    // Collapse automatically on small viewports
+    const onResize = () => {
+      if (window.innerWidth <= 1024) {
+        dispatch({ type: "SIDEBAR_SET", payload: true });
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Persist sidebar preference
+  useEffect(() => {
+    const key = "crm_sidebar_collapsed";
+    try {
+      localStorage.setItem(key, JSON.stringify(state.ui.sidebarCollapsed));
+    } catch {
+      // ignore
+    }
+  }, [state.ui.sidebarCollapsed]);
 
   // Online/offline handling
   useEffect(() => {
