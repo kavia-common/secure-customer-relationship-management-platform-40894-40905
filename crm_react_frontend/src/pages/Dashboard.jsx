@@ -13,17 +13,33 @@ import { navigate } from "../router/HashRouter";
  */
 export default function Dashboard() {
   const [recent, setRecent] = useState([]);
+  const [metrics, setMetrics] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await get("/requests/recent");
-        setRecent(data || []);
+        const m = await get("/metrics/summary");
+        setMetrics(m || null);
+      } catch {
+        setMetrics(null);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // No backend endpoint for recent requests in spec; use mock fallback
+        setRecent(mockRequests.slice(0, 5));
       } catch {
         setRecent(mockRequests.slice(0, 5));
       }
     })();
   }, []);
+
+  const openRequests = metrics?.open_requests ?? 128;
+  const resolved7d = metrics?.resolved_requests_last_7d ?? 23;
+  const customers = metrics?.customers ?? 540;
 
   return (
     <div>
@@ -35,9 +51,9 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-4">
-        <KPICard label="Open Requests" value="128" change={12} changeLabel="vs last week" sparkPercent={72} />
-        <KPICard label="Closed Today" value="23" change={-4} changeLabel="vs yesterday" sparkPercent={35} />
-        <KPICard label="Avg Resolution (h)" value="5.4" change={8} changeLabel="SLAs met 92%" sparkPercent={58} />
+        <KPICard label="Open Requests" value={openRequests} change={12} changeLabel="vs last week" sparkPercent={72} />
+        <KPICard label="Resolved (7d)" value={resolved7d} change={-4} changeLabel="vs prior 7d" sparkPercent={35} />
+        <KPICard label="Customers" value={customers} change={8} changeLabel="net new last 30d" sparkPercent={58} />
         <KPICard label="CSAT" value="4.6" change={2} changeLabel="avg last 30d" sparkPercent={66} />
       </div>
 

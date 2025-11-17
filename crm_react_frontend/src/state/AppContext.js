@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from "react";
-import { getQueue, setDispatch, syncQueue } from "../api/client";
+import { getQueue, setDispatch, syncQueue, getAuthToken, get } from "../api/client";
 
 const AppContext = createContext(null);
 
@@ -13,7 +13,9 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "LOGIN":
-      return { ...state, auth: { token: action.payload.token, user: action.payload.user } };
+      return { ...state, auth: { token: action.payload.token, user: action.payload.user || state.auth.user } };
+    case "SET_USER":
+      return { ...state, auth: { ...state.auth, user: action.payload } };
     case "LOGOUT":
       return { ...state, auth: { token: null, user: null } };
     case "SET_THEME":
@@ -58,6 +60,22 @@ export function AppProvider({ children }) {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", state.ui.theme);
   }, [state.ui.theme]);
+
+  // Initialize auth from stored token and fetch profile
+  useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      dispatch({ type: "LOGIN", payload: { token, user: null } });
+      (async () => {
+        try {
+          const me = await get("/auth/me");
+          dispatch({ type: "SET_USER", payload: me });
+        } catch {
+          // ignore; token might be invalid or backend unavailable
+        }
+      })();
+    }
+  }, []);
 
   // Online/offline handling
   useEffect(() => {

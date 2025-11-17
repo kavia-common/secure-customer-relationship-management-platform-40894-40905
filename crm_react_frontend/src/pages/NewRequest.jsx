@@ -1,28 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { Input, Select } from "../components/Input";
 import Button from "../components/Button";
-import { mutate } from "../api/client";
+import { get, mutate } from "../api/client";
 import { navigate } from "../router/HashRouter";
+import { customers as mockCustomers } from "../api/mockData";
 
 /**
  * PUBLIC_INTERFACE
- * New request form - queues when offline
+ * New request form - queues when offline and aligns with backend schema
  */
 export default function NewRequest() {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [desc, setDesc] = useState("");
+  const [customers, setCustomers] = useState([]);
+  const [customerId, setCustomerId] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await get("/customers");
+        setCustomers(data || []);
+        if ((data || []).length > 0) setCustomerId(String(data[0].id));
+      } catch {
+        setCustomers(mockCustomers.map((c, idx) => ({ id: idx + 1, name: c.name })));
+        setCustomerId("1");
+      }
+    })();
+  }, []);
+
+  const mapPriority = (p) => {
+    if (p === "Low") return "low";
+    if (p === "High") return "high";
+    return "normal";
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    const res = await mutate("POST", "/requests", { title, priority, desc });
+    const payload = {
+      customer_id: Number(customerId),
+      subject: title,
+      description: desc,
+      priority: mapPriority(priority),
+    };
+    const res = await mutate("POST", "/requests", payload);
     if (res.queued) {
       alert("No network. Request queued for sync.");
-    } else {
+      navigate("/requests");
+    } else if (res && res.id) {
       alert("Request created.");
+      navigate(`/requests/${res.id}`);
+    } else {
+      alert("Submitted.");
+      navigate("/requests");
     }
-    navigate("/requests");
   };
 
   return (
@@ -32,6 +64,11 @@ export default function NewRequest() {
       </div>
       <Card>
         <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
+          <Select label="Customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
           <Input label="Title" required value={title} onChange={(e) => setTitle(e.target.value)} />
           <Select label="Priority" value={priority} onChange={(e) => setPriority(e.target.value)}>
             <option>Low</option>
