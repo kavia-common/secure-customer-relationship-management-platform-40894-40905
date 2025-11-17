@@ -217,3 +217,26 @@ function enqueue(item) {
   q.push(item);
   saveQueue(q);
 }
+
+/**
+ * PUBLIC_INTERFACE
+ * getCustomers - list customers with pagination and query
+ * Returns either:
+ *  - { items, total, page, page_size } (preferred)
+ *  - or a plain array of CustomerOut (legacy)
+ */
+export async function getCustomers(params = {}) {
+  const data = await get("/customers", params);
+  if (Array.isArray(data)) {
+    return { items: data, total: data.length, page: Number(params.page || 1), page_size: Number(params.page_size || data.length || 50) };
+  }
+  return data;
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * getCustomerById - fetch a single customer detail
+ */
+export async function getCustomerById(id) {
+  return await get(`/customers/${id}`);
+}
