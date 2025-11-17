@@ -1,6 +1,6 @@
 import React from "react";
 import { useApp } from "../state/AppContext";
-import { syncQueue } from "../api/client";
+import { syncQueue, setAuthToken } from "../api/client";
 import { navigate } from "../router/HashRouter";
 
 /**
@@ -20,6 +20,12 @@ export default function Topbar() {
     if (synced === 0) {
       dispatch({ type: "NOTIFY", payload: { type: "info", message: "No queued operations to sync" } });
     }
+  };
+
+  const onLogout = () => {
+    setAuthToken(null);
+    dispatch({ type: "LOGOUT" });
+    navigate("/login"); // redirect to #/login as required
   };
 
   const collapsed = state.ui.sidebarCollapsed;
@@ -61,6 +67,7 @@ export default function Topbar() {
         </button>
         <button className="btn ghost" onClick={onThemeToggle} aria-label="Toggle theme">🌓</button>
         <button className="btn" onClick={() => navigate("/login")}>Login</button>
+        <button className="btn danger" onClick={onLogout} aria-label="Logout and go to login">Logout</button>
       </div>
     </header>
   );

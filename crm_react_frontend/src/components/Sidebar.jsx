@@ -92,7 +92,7 @@ export default function Sidebar() {
     {
       title: "Main",
       items: [
-        { key: "dashboard", label: "Dashboard", to: "/", icon: "dashboard" },
+        { key: "dashboard", label: "Dashboard", to: "/dashboard", icon: "dashboard" },
       ],
     },
     {
@@ -115,7 +115,9 @@ export default function Sidebar() {
     {
       title: "Admin",
       items: [
-        { key: "admin", label: "Admin", to: "/audit", icon: "admin" },
+        { key: "admin-users", label: "Users", to: "/admin/users", icon: "admin" },
+        { key: "admin-roles", label: "Roles", to: "/admin/roles", icon: "admin" },
+        { key: "admin-audit", label: "Audit", to: "/admin/audit", icon: "admin" },
         { key: "settings", label: "Settings", to: "/settings", icon: "settings" },
       ],
     },
@@ -182,6 +184,14 @@ export default function Sidebar() {
                       onClick={() => {
                         // Close sidebar on mobile after navigation
                         if (isMobile) dispatch({ type: "SIDEBAR_SET", payload: true });
+                      }}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        // Ensure keyboard activation (Enter/Space) for accessibility
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.currentTarget.click();
+                        }
                       }}
                     >
                       <span className="icon" aria-hidden="true"><Icon name={it.icon} /></span>

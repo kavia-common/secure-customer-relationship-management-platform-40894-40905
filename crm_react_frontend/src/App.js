@@ -20,6 +20,10 @@ import Settings from "./pages/Settings";
 import Audit from "./pages/Audit";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Workflows from "./pages/Workflows";
+import Inbox from "./pages/Inbox";
+import AdminUsers from "./pages/AdminUsers";
+import AdminRoles from "./pages/AdminRoles";
 
 /**
  * PUBLIC_INTERFACE
@@ -28,16 +32,31 @@ import NotFound from "./pages/NotFound";
 function App() {
   const routes = [
     { path: "/", component: Dashboard },
+    { path: "/dashboard", component: Dashboard },
+
     { path: "/login", component: Login },
+
     { path: "/customers", component: Customers },
     { path: "/customers/:id", component: CustomerDetail },
+
     { path: "/requests", component: Requests },
     { path: "/requests/new", component: NewRequest },
     { path: "/requests/:id", component: RequestDetail },
+
     { path: "/complaints", component: Complaints },
     { path: "/reports", component: Reports },
     { path: "/analytics", component: Analytics },
+
+    { path: "/workflows", component: Workflows },
+    { path: "/inbox", component: Inbox },
+
+    { path: "/admin/users", component: AdminUsers },
+    { path: "/admin/roles", component: AdminRoles },
+    { path: "/admin/audit", component: Audit },
+
+    // Backward compatibility route
     { path: "/audit", component: Audit },
+
     { path: "/settings", component: Settings },
     { path: "*", component: NotFound },
   ];
